@@ -1,5 +1,5 @@
-#include <opencv2/core/core.hpp>
-#include <opencv2\opencv.hpp> // opencv ±âº»ÀûÀÎ API°¡ µé¾îÀÖ´Â Çì´õÆÄÀÏ
+ï»¿#include <opencv2/core/core.hpp>
+#include <opencv2\opencv.hpp> // opencv ê¸°ë³¸ì ì¸ APIê°€ ë“¤ì–´ìˆëŠ” í—¤ë”íŒŒì¼
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 #define PI 3.141592
@@ -9,7 +9,7 @@ using namespace cv;
 
 int main(int argc, char** argv)
 {
-	//Â÷¼± °ËÃâ
+	//ì°¨ì„  ê²€ì¶œ
 	VideoCapture capture;
 	capture.open("highway.mp4");
 
@@ -20,16 +20,20 @@ int main(int argc, char** argv)
 	namedWindow("File Play", WINDOW_AUTOSIZE);
 	Mat frame;
 	vector<Vec2f> lines;
+	Point banishP;
+	Point pt1, pt2;
+	vector<Vec2f>linesR;
+	float resultLine[2];
 
 	for (;;) {
 		//Mat frame;
 		Mat thres, canny;
-		Mat Roi1, Roi2;
+		Mat Roi1, Roi2, Roi;
 
 		capture >> frame;
 
 		imshow("File Play", frame);
-		if (waitKey(30) >= 0)  //27Àº Esc, 32´Â Space key
+		if (waitKey(30) >= 0)  //27ì€ Esc, 32ëŠ” Space key
 			break;
 
 		cvtColor(frame, thres, CV_BGR2GRAY);
@@ -38,55 +42,68 @@ int main(int argc, char** argv)
 		imshow("canny", canny);
 		printf("%d, %d\n", frame.rows, frame.cols);
 
-		Roi1 = canny(Rect(0, 2 * frame.rows / 3, frame.cols, 1 * frame.rows / 3));
-		//Roi2 = canny(Rect(frame.cols / 2, 0, frame.cols / 2, frame.rows));
+		Roi1 = canny(Rect(0, 0, frame.cols / 2, frame.rows));
+		Roi2 = canny(Rect(frame.cols / 2, 0, frame.cols / 2, frame.rows));
+		Roi = canny(Rect(0, 3 * frame.rows / 5, frame.cols, 2 * frame.rows / 5));
 
-		imshow("Roi1", Roi1);
+		//imshow("Roi1", Roi1);
 		//imshow("Roi2", Roi2);
+		imshow("Roi", Roi);
 
-		// ¼± °¨Áö À§ÇÑ ÇãÇÁ º¯È¯
-		HoughLines(Roi1, lines, 1, PI / 180, 200);
+		// ì„  ê°ì§€ ìœ„í•œ í—ˆí”„ ë³€í™˜
+		HoughLines(Roi, lines, 1, PI / 180, 200);
 
-		// ¼± ±×¸®±â
+		// ì„  ê·¸ë¦¬ê¸°
 		Mat result(canny.rows, canny.cols, CV_8U, Scalar(255));
 		cout << "Lines detected: " << lines.size() << endl;
 
-		// ¼±º¤ÅÍ¸¦¹İº¹ÇØ¼±±×¸®±â
+		// ì„ ë²¡í„°ë¥¼ë°˜ë³µí•´ì„ ê·¸ë¦¬ê¸°
 		vector<Vec2f>::const_iterator it = lines.begin();
+
 		while (it != lines.end()) {
-			float rho = (*it)[0]; // Ã¹¹øÂ°¿ä¼Ò´Ârho °Å¸®
-			float theta = (*it)[1]; // µÎ¹øÂ°¿ä¼Ò´Â µ¨Å¸°¢µµ
-			if (theta < PI / 4. || theta > 3.*PI / 4.) { // ¼öÁ÷Çà
-				Point pt1(rho / cos(theta), 0); // Ã¹Çà¿¡¼­ÇØ´ç¼±ÀÇ±³Â÷Á¡
+			float rho = (*it)[0]; // ì²«ë²ˆì§¸ìš”ì†ŒëŠ”rho ê±°ë¦¬
+			float theta = (*it)[1]; // ë‘ë²ˆì§¸ìš”ì†ŒëŠ” ë¸íƒ€ê°ë„
+			if (theta < PI || theta > PI / 2) { // ìˆ˜ì§í–‰
+				Point pt1(rho / cos(theta), 0); // ì²«í–‰ì—ì„œí•´ë‹¹ì„ ì˜êµì°¨ì 
 				Point pt2((rho - result.rows*sin(theta)) / cos(theta), result.rows);
-				pt1.y = pt1.y + 2 * frame.rows / 3;
-				pt2.y = pt2.y + 2 * frame.rows / 3;
-
-				// ¸¶Áö¸·Çà¿¡¼­ÇØ´ç¼±ÀÇ±³Â÷Á¡
-				line(frame, pt1, pt2, Scalar(255), 1); // ÇÏ¾á¼±À¸·Î±×¸®±â
+				// ë§ˆì§€ë§‰í–‰ì—ì„œí•´ë‹¹ì„ ì˜êµì°¨ì 
+				pt1.y = pt1.y + 3 * result.rows / 5;
+				pt2.y = pt2.y + 3 * result.rows / 5;
+				//circle(frame, pt1, 3, Scalar(255, 0, 0), 100);
+				//circle(frame, pt2, 3, Scalar(255, 0, 255), 100);
+				line(frame, pt1, pt2, Scalar(255, 0, 0), 5); // í•˜ì–€ì„ ìœ¼ë¡œê·¸ë¦¬ê¸°
 			}
-			else { // ¼öÆòÇà
-				Point pt1(0, rho / sin(theta)); // Ã¹¹øÂ°¿­¿¡¼­ÇØ´ç¼±ÀÇ±³Â÷Á¡
+
+			else
+			{ // ìˆ˜í‰í–‰
+				Point pt1(0, rho / sin(theta)); // ì²«ë²ˆì§¸ì—´ì—ì„œí•´ë‹¹ì„ ì˜êµì°¨ì 
 				Point pt2(result.cols, (rho - result.cols*cos(theta)) / sin(theta));
-				pt1.y = pt1.y + 2 * frame.rows / 3;
-				pt2.y = pt2.y + 2 * frame.rows / 3;
-
-				// ¸¶Áö¸·¿­¿¡¼­ÇØ´ç¼±ÀÇ±³Â÷Á¡
-				line(frame, pt1, pt2, Scalar(255), 1); // ÇÏ¾á¼±À¸·Î±×¸®±â
+				// ë§ˆì§€ë§‰ì—´ì—ì„œí•´ë‹¹ì„ ì˜êµì°¨ì 
+				pt1.y = pt1.y + 3 * result.rows / 5;
+				pt2.y = pt2.y + 3 * result.rows / 5;
+				//circle(frame, pt1, 3, Scalar(255, 255, 0), 100);
+				//circle(frame, pt2, 3, Scalar(255, 255, 255), 100);
+				line(frame, pt1, pt2, Scalar(0, 0, 0), 5); // í•˜ì–€ì„ ìœ¼ë¡œê·¸ë¦¬ê¸°
 			}
-			//cout << "line: (" << rho << "," << theta << ")\n";
+
+
+
+
+			cout << "line: (" << rho << "," << theta << ")\n";
+
 			++it;
 		}
 
-		/*
-		HoughLinesP(canny, lines, 1, CV_PI / 180, 30, 30, 3);
-		for (int i = 0; i < lines.size(); i++) {
-		Vec4i L = lines[i];
-		line(frame, Point(L[0], L[1]), Point(L[2], L[3]), Scalar(0, 0, 255), 5);
-		}
-		*/
+
+		//HoughLinesP(canny, lines, 1, CV_PI / 180, 30, 30, 3);
+		//for (int i = 0; i < lines.size(); i++) {
+		   //Vec4i L = lines[i];
+		   //line(frame, Point(L[0], L[1]), Point(L[2], L[3]), Scalar(0, 0, 255), 5);
+		//}
+
 
 		imshow("Example", frame);
+
 
 	}
 
