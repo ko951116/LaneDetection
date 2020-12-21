@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 		capture >> frame;
 
 		imshow("File Play", frame);
-		if (waitKey(30) >= 0)  //27은 Esc, 32는 Space key
+		if (waitKey(30) >= 0)  //27 = Esc, 32 = Space key
 			break;
 
 		cvtColor(frame, thres, CV_BGR2GRAY);
@@ -50,61 +50,51 @@ int main(int argc, char** argv)
 		//imshow("Roi2", Roi2);
 		imshow("Roi", Roi);
 
-		// 선 감지 위한 허프 변환
+		// Hughlines function for line detection
 		HoughLines(Roi, lines, 1, PI / 180, 200);
 
-		// 선 그리기
+		// draw lines
 		Mat result(canny.rows, canny.cols, CV_8U, Scalar(255));
 		cout << "Lines detected: " << lines.size() << endl;
 
-		// 선벡터를반복해선그리기
+		// draw lines repeatedly with line vectors
 		vector<Vec2f>::const_iterator it = lines.begin();
 
 		while (it != lines.end()) {
-			float rho = (*it)[0]; // 첫번째요소는rho 거리
-			float theta = (*it)[1]; // 두번째요소는 델타각도
-			if (theta < PI || theta > PI / 2) { // 수직행
-				Point pt1(rho / cos(theta), 0); // 첫행에서해당선의교차점
+			// 1st factor = rho distance
+			float rho = (*it)[0]; 
+			// 2nd factor = delta degree 
+			float theta = (*it)[1]; 
+
+			// vertical line
+			if (theta < PI || theta > PI / 2) { 
+				// intersection of the line in the first row
+				Point pt1(rho / cos(theta), 0); 
+				// intersection of the line in the last row
 				Point pt2((rho - result.rows*sin(theta)) / cos(theta), result.rows);
-				// 마지막행에서해당선의교차점
+
 				pt1.y = pt1.y + 3 * result.rows / 5;
 				pt2.y = pt2.y + 3 * result.rows / 5;
-				//circle(frame, pt1, 3, Scalar(255, 0, 0), 100);
-				//circle(frame, pt2, 3, Scalar(255, 0, 255), 100);
-				line(frame, pt1, pt2, Scalar(255, 0, 0), 5); // 하얀선으로그리기
+				
+				line(frame, pt1, pt2, Scalar(255, 0, 0), 5);
 			}
 
-			else
-			{ // 수평행
-				Point pt1(0, rho / sin(theta)); // 첫번째열에서해당선의교차점
+			// vertical line
+			else { 
+				// intersection of the line in the first column
+				Point pt1(0, rho / sin(theta));
+				// intersection of the line in the last column
 				Point pt2(result.cols, (rho - result.cols*cos(theta)) / sin(theta));
-				// 마지막열에서해당선의교차점
+
 				pt1.y = pt1.y + 3 * result.rows / 5;
 				pt2.y = pt2.y + 3 * result.rows / 5;
-				//circle(frame, pt1, 3, Scalar(255, 255, 0), 100);
-				//circle(frame, pt2, 3, Scalar(255, 255, 255), 100);
-				line(frame, pt1, pt2, Scalar(0, 0, 0), 5); // 하얀선으로그리기
+				
+				line(frame, pt1, pt2, Scalar(0, 0, 0), 5); 
 			}
-
-
-
 
 			cout << "line: (" << rho << "," << theta << ")\n";
-
 			++it;
 		}
-
-
-		//HoughLinesP(canny, lines, 1, CV_PI / 180, 30, 30, 3);
-		//for (int i = 0; i < lines.size(); i++) {
-		   //Vec4i L = lines[i];
-		   //line(frame, Point(L[0], L[1]), Point(L[2], L[3]), Scalar(0, 0, 255), 5);
-		//}
-
-
 		imshow("Example", frame);
-
-
 	}
-
 }
