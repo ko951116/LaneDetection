@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 				line(frame, pt1, pt2, Scalar(255, 0, 0), 5);
 			}
 
-			// vertical line
+			// horizontal line
 			else { 
 				// intersection of the line in the first column
 				Point pt1(0, rho / sin(theta));
